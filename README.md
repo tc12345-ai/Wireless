@@ -104,43 +104,6 @@ print(y[:5])
 
 导出模块 `export/` 可将仿真数据与配置保存为常见格式，适合后续在 NumPy / MATLAB / 数据分析流程中处理。
 
-## 开发自检（建议）
-
-在提交代码前，可以执行以下检查命令确认核心模块可用：
-
-```bash
-# 1) 语法检查（编译所有 Python 模块）
-python -m py_compile main.py channels/*.py config/*.py analysis/*.py visualization/*.py export/*.py gui/*.py
-
-# 2) 运行最小化冒烟测试（覆盖模型生成、应用、统计与拟合）
-python - <<'PY'
-import numpy as np
-from channels import AWGNChannel, RayleighChannel, RiceChannel, MultipathChannel
-from analysis import ChannelStatistics, DistributionFitter
-
-np.random.seed(42)
-x = np.ones(1024, dtype=complex)
-
-chs = [
-    AWGNChannel(num_samples=1024),
-    RayleighChannel(num_samples=1024),
-    RiceChannel(num_samples=1024),
-    MultipathChannel(num_samples=1024),
-]
-
-for ch in chs:
-    r = ch.generate()
-    y = ch.apply(x)
-    assert r.impulse_response is not None
-    assert y.shape == x.shape
-
-pdp = ChannelStatistics.compute_pdp(chs[1].channel_response.impulse_response, sample_rate=1e6)
-assert len(pdp.delays) == len(pdp.power)
-DistributionFitter.find_best_fit(np.abs(chs[1].channel_response.impulse_response))
-print('smoke_ok')
-PY
-```
-
 ## 常见问题
 
 1. **GUI 无法启动 / Tk 报错**
